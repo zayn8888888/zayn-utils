@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       zayn-utils:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
 
 packages:
 
@@ -261,8 +261,8 @@ packages:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
 
-  zayn-utils@1.0.0:
-    resolution: {integrity: sha512-t/9+8q0196nhnrozRfiz4zVZACg+SyOz0g8oxbcWt45wPGgiosQrIUL8alqTWkerGV2+ugFIDp/WsmaPTPD0nw==}
+  zayn-utils@1.0.1:
+    resolution: {integrity: sha512-UjgEHhwpiG6UavssUOMnJkgDkijc2rRkJgpUP4uEa4U/YMPdrkK7IOBKwjkryOw0Ys4vWqyS8RJhdTUdXvn93A==}
     engines: {node: '>=14.0.0'}
 
 snapshots:
@@ -495,7 +495,7 @@ snapshots:
 
   web-streams-polyfill@3.3.3: {}
 
-  zayn-utils@1.0.0:
+  zayn-utils@1.0.1:
     dependencies:
       axios: 1.9.0
       chalk: 5.4.1

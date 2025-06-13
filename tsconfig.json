@@ -22,6 +22,7 @@
     "test.js",
     "test/**/*",
     "rollup.config.js",
-    "*.config.js"
+    "*.config.js",
+    "src/plugins"
   ]
 }

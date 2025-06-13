@@ -1,6 +1,6 @@
 {
   "name": "zayn-utils",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A utility library",
   "type": "module",
   "main": "dist/index.cjs.js",
@@ -55,6 +55,23 @@
     "rollup": "^4.0.0",
     "rollup-plugin-terser": "^7.0.0",
     "typescript": "^5.8.3"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer-core": {
+      "optional": true
+    },
+    "windows-shortcuts": {
+      "optional": true
+    },
+    "puppeteer": {
+      "optional": true
+    },
+    "puppeteer-extra": {
+      "optional": true
+    },
+    "puppeteer-extra-plugin-stealth": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=14.0.0"
