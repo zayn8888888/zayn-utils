@@ -1,0 +1,8 @@
+# .npmignore
+test.js
+.gitignore
+rollup.config.js
+pnpm-lock.yaml
+tsconfig.json
+*.ts
+!types/**/*.d.ts
