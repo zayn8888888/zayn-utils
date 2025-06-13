@@ -26,7 +26,13 @@ import {
 ### CommonJS
 
 ```javascript
-const { askQuestion, createProxyAgent, sleep, log, initSendMsg } = require('zayn-utils');
+const {
+  askQuestion,
+  createProxyAgent,
+  sleep,
+  log,
+  initSendMsg,
+} = require("zayn-utils");
 ```
 
 ## Features
@@ -64,17 +70,3 @@ const { askQuestion, createProxyAgent, sleep, log, initSendMsg } = require('zayn
 ## License
 
 MIT
-
-## 6.  构建和发布步骤
-
-```bash
-# 安装依赖
-npm install
-
-# 构建项目
-npm run build
-
-# 发布到npm（首次需要登录）
-npm login
-npm publish
-```
