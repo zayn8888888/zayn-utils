@@ -111,6 +111,10 @@ const processMsg = fnCanRetry(async (content, sendMsgConfig) => {
     await sendHTMLAsRichText(content, sendMsgConfig);
     parentPort.postMessage("done");
   } catch (e) {
+    if (e.message.includes("缺少依赖")) {
+      parentPort.postMessage(e.message);
+      return;
+    }
     throw e;
   }
 });
