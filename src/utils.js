@@ -86,12 +86,14 @@ const checkProxy = fnCanRetry(async (agent, proxyString) => {
 /**
  * 生成代理对象
  * @param {string} proxyString - 代理字符串，支持格式：host:port 或 protocol://username:password@host:port
- * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
- * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @param {Object} [options={}] - 选项
+ * @param {Array<string>} [options.proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @param {boolean} [options.needCheck=true] - 是否需要检查代理是否可用
  * @returns {Promise<{host: string, port: number|string, username?: string, password?: string, httpAgent: Object, httpsAgent: Object,proxyString:String}>} 代理对象，包含主机、端口、用户名、密码和代理Agent
 
  */
-async function createProxyAgent(proxyString, proxies = []) {
+async function createProxyAgent(proxyString, options) {
+  const { proxies = [], needCheck = true } = options;
   try {
     let protocol, host, port, auth;
 
@@ -161,25 +163,24 @@ async function createProxyAgent(proxyString, proxies = []) {
     // 验证代理
     try {
       // @ts-ignore
-      await checkProxy(httpsAgent, proxyString);
+      if (needCheck) await checkProxy(httpsAgent, proxyString);
     } catch (error) {
-      throw error;
-      /* if (proxies.length > 0) {
+      if (proxies.length > 0) {
         console.log("使用下一个代理");
-        let index = proxies.findIndex((p) => p === proxyString);
-        if (!index && index !== 0) {
-          // 随机一个
-          index = Math.floor(Math.random() * proxies.length);
+        const availableProxies = proxies.filter((p) => p !== proxyString);
+        if (availableProxies.length === 0) {
+          throw "代理不可用";
         }
-        const newProxy = index + (1 % proxies.length);
-        const res = await createProxyAgent(
-          proxies[newProxy],
-          proxies.filter((p) => p !== proxyString)
-        );
+        const newProxy =
+          availableProxies[Math.floor(Math.random() * availableProxies.length)];
+
+        const res = await createProxyAgent(newProxy, {
+          proxies: availableProxies,
+        });
         return res;
       } else {
         throw "代理不可用";
-      } */
+      }
     }
     return {
       port,
