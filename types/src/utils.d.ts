@@ -7,12 +7,16 @@ export function askQuestion(prompt: string): Promise<string>;
 /**
  * 生成代理对象
  * @param {string} proxyString - 代理字符串，支持格式：host:port 或 protocol://username:password@host:port
- * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
- * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @param {Object} [options={}] - 选项
+ * @param {Array<string>} [options.proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @param {boolean} [options.needCheck=true] - 是否需要检查代理是否可用
  * @returns {Promise<{host: string, port: number|string, username?: string, password?: string, httpAgent: Object, httpsAgent: Object,proxyString:String}>} 代理对象，包含主机、端口、用户名、密码和代理Agent
 
  */
-export function createProxyAgent(proxyString: string, proxies?: Array<string>): Promise<{
+export function createProxyAgent(proxyString: string, options?: {
+    proxies?: Array<string>;
+    needCheck?: boolean;
+}): Promise<{
     host: string;
     port: number | string;
     username?: string;
