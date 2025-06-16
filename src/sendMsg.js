@@ -19,7 +19,7 @@ const importDeps = async () => {
     };
   } catch (error) {
     throw new Error(
-      `加密信息时，缺少依赖，请安装:  npm install matrix-js-sdk   同时需注意仅支持esm环境   \n原始错误: ${error.message}`
+      `加密信息时，缺少依赖，请安装:  npm install matrix-js-sdk@37.5.0  注意matrix-js-sdk新版本需nodejs环境支持Promise.withResolvers 同时需注意仅支持esm环境   \n原始错误: ${error.message}`
     );
   }
 };
