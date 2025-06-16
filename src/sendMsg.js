@@ -170,7 +170,7 @@ const sendMsg = async (
  * @param {String} sendMsgConfig.title 标题
  * @return {sendMsg} sendMsg 发送消息函数
  */
-export const initSendMsg = ({
+const initSendMsg = ({
   userId,
   accessToken,
   roomId,
@@ -199,3 +199,5 @@ useMainThread(
     processMsg(content, sendMsgConfig);
   }
 );
+
+export { initSendMsg };
