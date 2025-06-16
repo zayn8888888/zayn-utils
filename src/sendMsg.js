@@ -1,38 +1,31 @@
-import sdk from "matrix-js-sdk";
-import { logger } from "matrix-js-sdk/lib/logger.js";
 import axios from "axios";
+// @ts-ignore
 import { Worker, isMainThread, workerData, parentPort } from "worker_threads";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
-import { useMainThread } from "./utils.js";
+import { useMainThread, fnCanRetry } from "./utils.js";
 import { marked } from "marked"; // 新增：引入
-logger.setLevel("error");
 
-/**
- * 重试函数
- * @param fn {Function} 函数
- * @param maxCount {Number=3?} 最大重试次数
- * @returns {Promise<*>}
- * */
-function fnCanRetry(fn, maxCount = 5) {
-  return async function (...args) {
-    let count = 0;
-    while (count < maxCount) {
-      try {
-        return await fn(...args);
-      } catch (error) {
-        if (count === maxCount - 1) {
-          throw error;
-        }
-        await sleep(1000);
-        console.log(`Retry ${count + 1} times`);
-        count++;
-      }
-    }
-  };
-}
+const importDeps = async () => {
+  try {
+    const [sdk, { logger }] = await Promise.all([
+      import("matrix-js-sdk"),
+      import("matrix-js-sdk/lib/logger.js"),
+    ]);
+    // @ts-ignore
+    logger.setLevel("error");
+    return {
+      sdk: sdk.default,
+    };
+  } catch (error) {
+    throw new Error(
+      `加密信息时，缺少依赖，请安装:  npm install matrix-js-sdk   同时需注意仅支持esm环境   \n原始错误: ${error.message}`
+    );
+  }
+};
 
 async function sendHTMLAsRichText(msg, sendMsgConfig) {
+  const { sdk } = await importDeps();
   try {
     const { userId, accessToken, deviceId, baseUrl, roomId } = sendMsgConfig;
     const client = sdk.createClient({
@@ -41,10 +34,13 @@ async function sendHTMLAsRichText(msg, sendMsgConfig) {
       userId, // 你的 Matrix 用户 ID
       deviceId,
     });
+
+    // @ts-ignore
     client.on("error", (err) => {
       parentPort.postMessage("client error: " + err.message);
     });
 
+    // @ts-ignore
     client.on("sync", (state, prevState, res) => {
       if (state === "ERROR") {
         parentPort.postMessage("sync error: " + res.error);
@@ -62,8 +58,9 @@ async function sendHTMLAsRichText(msg, sendMsgConfig) {
 
     await client.sendMessage(roomId, {
       body: richTextMessage, // 纯文本（Markdown 原文）
-      msgtype: "m.text",
+      msgtype: sdk.MsgType.Text,
       format: "org.matrix.custom.html",
+      // @ts-ignore
       formatted_body: htmlMessage, // HTML 格式
     });
     parentPort.postMessage("消息发送成功");
@@ -102,6 +99,7 @@ async function sendHTMLAsRichTextByAxios(msg, sendMsgConfig) {
 
 const processMsg = fnCanRetry(async (content, sendMsgConfig) => {
   try {
+    // @ts-ignore
     process.on("unhandledRejection", (reason, promise) => {
       parentPort.postMessage("未处理的Promise拒绝" + JSON.stringify(reason));
       process.exit(1);
@@ -118,8 +116,10 @@ const processMsg = fnCanRetry(async (content, sendMsgConfig) => {
 });
 /**
  * 发送消息
- * @param msg {String|Object} 消息内容
- * @param err {Boolean=false} 是否为错误消息
+ * @param {Object} msgOptions 消息选项
+ * @param {String|Object} msgOptions.msg 消息内容
+ * @param {Boolean=}  msgOptions.err 是否为错误消息 默认false
+ * @param {Boolean=} msgOptions.encrypt 是否加密  默认false
  */
 const sendMsg = async (
   { msg, err = false, encrypt = false },
@@ -191,12 +191,11 @@ export const initSendMsg = ({
 useMainThread(
   import.meta.url,
   () => {
-    sendMsg("test");
+    sendMsg({ msg: "test" });
   },
   () => {
     // worker
     const { content, sendMsgConfig } = workerData;
-
     processMsg(content, sendMsgConfig);
   }
 );

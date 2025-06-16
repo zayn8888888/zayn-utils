@@ -2,3 +2,5 @@ node_modules/
 dist/
 test.js
 src/temp
+types/temp
+test/

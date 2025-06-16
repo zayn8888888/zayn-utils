@@ -5,24 +5,22 @@
  */
 export function askQuestion(prompt: string): Promise<string>;
 /**
- * 检查代理是否可用
- * @param proxyString {String} 代理字符串
- *
+ * 生成代理对象
+ * @param {string} proxyString - 代理字符串，支持格式：host:port 或 protocol://username:password@host:port
+ * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @returns {Promise<{host: string, port: number|string, username?: string, password?: string, httpAgent: Object, httpsAgent: Object,proxyString:String}>} 代理对象，包含主机、端口、用户名、密码和代理Agent
+
  */
-/**
- * 生成代理
- * @param proxyString {String} 代理字符串
- * @param proxies {Array?} 其它代理列表，如果当前不可用，则会尝试使用其它代理
- * @returns {Object} proxyInfo 代理对象
- * @returns {String} proxyInfo.host 代理主机
- * @returns {Number} proxyInfo.port 代理端口
- * @returns {String} proxyInfo.username 代理用户名
- * @returns {String} proxyInfo.password 代理密码
- * @returns {Object} proxyInfo.httpAgent http代理
- * @returns {Object} proxyInfo.httpsAgent https代理
- *
- *  */
-export function createProxyAgent(proxyString: string, proxies?: any[] | null): any;
+export function createProxyAgent(proxyString: string, proxies?: Array<string>): Promise<{
+    host: string;
+    port: number | string;
+    username?: string;
+    password?: string;
+    httpAgent: any;
+    httpsAgent: any;
+    proxyString: string;
+}>;
 export function sleep(time?: number): Promise<any>;
 export namespace log {
     function success(msg: any): void;
@@ -44,11 +42,10 @@ export namespace log {
 /**
  * 重试函数
  * @param fn {Function} 函数
- * @param maxCount {Number=3?} 最大重试次数
- * @returns {Promise<*>}
+ * @param maxCount {Number?} 最大重试次数
  * */
-export function fnCanRetry(fn: Function, maxCount?: number | undefined): Promise<any>;
-export const checkProxy: Promise<any>;
+export function fnCanRetry(fn: Function, maxCount?: number | null): (...args: any[]) => Promise<any>;
+export function checkProxy(...args: any[]): Promise<any>;
 export function loadProxies(path?: string): string[];
 export function loadUser(path?: string): string[];
 /**
@@ -70,9 +67,8 @@ export function createProcess(tasks: any[], fn: Function, proxies?: any[], concu
 /**
  * 队列操作
  * @param concurrency 同时执行的数量
- * @param fn {(arg) => Promise<any>} 操作函数 异步函数
- * @returns  {function(arg, getRemoveQueueSource?): Promise<any>}
- *
+ * @param {function(any): Promise<any>} fn - 操作函数，异步函数
+ * @returns {function(any, function?): Promise<any>} 返回一个队列执行函数
  * @desc
  * 使用方法
  *
@@ -101,14 +97,14 @@ export function createProcess(tasks: any[], fn: Function, proxies?: any[], concu
  *  }, 1000)
  *
  * */
-export function createQueue(concurrency: any, fn: (arg: any) => Promise<any>): (arg0: arg, arg1: getRemoveQueueSource | null) => Promise<any>;
+export function createQueue(concurrency: any, fn: (arg0: any) => Promise<any>): (arg0: any, arg1: Function | null) => Promise<any>;
 /**
  *
  * 任务队列 每多少ms执行多少次任务
  * @param interval  每多少ms
  * @param maxTasksPerInterval 每interval 秒执行多少次任务
  * @param task {(arg) => Promise<any>}  任务函数
- * @returns  {function(arg, getRemoveQueueSource?): Promise<any>}
+ * @returns  {function(any, function): Promise<any>}
  *
  * 使用方法
  *
@@ -135,10 +131,16 @@ export function createQueue(concurrency: any, fn: (arg: any) => Promise<any>): (
  *  setTimeout(() => {removeFn()},100)
  *
  * */
-export function createQueueByTime(interval: any, maxTasksPerInterval: any, task: (arg: any) => Promise<any>): (arg0: arg, arg1: getRemoveQueueSource | null) => Promise<any>;
+export function createQueueByTime(interval: any, maxTasksPerInterval: any, task: (arg: any) => Promise<any>): (arg0: any, arg1: Function) => Promise<any>;
 export function checkProxys(proxies: any): Promise<{
     validProxies: any[];
     invalidProxies: any[];
 }>;
 export function useGlobalTimeInterval(): any;
-export function useMainThread(url: any, main?: () => void, run?: () => void): void;
+/**
+ * 主线程
+ * @param url {String} 文件路径
+ * @param main {function} 主线程执行函数
+ * @param run {function} 子线程执行函数
+ */
+export function useMainThread(url: string, main?: Function, run?: Function): void;

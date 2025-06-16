@@ -13,7 +13,7 @@ const checkProxys = async (proxies) => {
   await Promise.all(
     proxies.map(async (proxy) => {
       try {
-        const data = await checkProxy(proxy);
+        const data = await createProxyAgent(proxy);
         if (!data) throw new Error("代理不可用");
         validProxies.push(proxy);
       } catch (e) {
@@ -61,6 +61,11 @@ const sleep = (time = 3000) => {
   });
 };
 
+/**
+ * 检查代理是否可用
+ * @param agent {Object} 代理对象
+ * @param proxyString {String?} 代理字符串
+ */
 const checkProxy = fnCanRetry(async (agent, proxyString) => {
   if (typeof agent === "string") {
     return await createProxyAgent(agent);
@@ -71,8 +76,6 @@ const checkProxy = fnCanRetry(async (agent, proxyString) => {
       url: "https://ipinfo.io/json",
       httpsAgent: agent,
       timeout: 3000,
-      httpsAgent: agent,
-      timeout: 3000,
     });
   } catch (e) {
     console.log("检查代理失败", e.message || e, proxyString);
@@ -81,23 +84,13 @@ const checkProxy = fnCanRetry(async (agent, proxyString) => {
 }, 4);
 
 /**
- * 检查代理是否可用
- * @param proxyString {String} 代理字符串
- *
+ * 生成代理对象
+ * @param {string} proxyString - 代理字符串，支持格式：host:port 或 protocol://username:password@host:port
+ * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @param {Array<string>} [proxies=[]] - 其它代理列表，如果当前代理不可用，则会尝试使用其它代理
+ * @returns {Promise<{host: string, port: number|string, username?: string, password?: string, httpAgent: Object, httpsAgent: Object,proxyString:String}>} 代理对象，包含主机、端口、用户名、密码和代理Agent
+
  */
-/**
- * 生成代理
- * @param proxyString {String} 代理字符串
- * @param proxies {Array?} 其它代理列表，如果当前不可用，则会尝试使用其它代理
- * @returns {Object} proxyInfo 代理对象
- * @returns {String} proxyInfo.host 代理主机
- * @returns {Number} proxyInfo.port 代理端口
- * @returns {String} proxyInfo.username 代理用户名
- * @returns {String} proxyInfo.password 代理密码
- * @returns {Object} proxyInfo.httpAgent http代理
- * @returns {Object} proxyInfo.httpsAgent https代理
- *
- *  */
 async function createProxyAgent(proxyString, proxies = []) {
   try {
     let protocol, host, port, auth;
@@ -142,16 +135,12 @@ async function createProxyAgent(proxyString, proxies = []) {
         rejectUnauthorized: false,
         keepAlive: true,
         timeout: 15000, // 总超时时间增加到15秒
-        freeSocketTimeout: 30000, // 空闲连接超时
-        connectTimeout: 5000, // 单独设置连接建立超时
         maxSockets: 50,
       });
       httpsAgent = new HttpsProxyAgent(httpProxyUrl, {
         rejectUnauthorized: false,
         keepAlive: true,
         timeout: 15000, // 总超时时间增加到15秒
-        freeSocketTimeout: 30000, // 空闲连接超时
-        connectTimeout: 5000, // 单独设置连接建立超时
         maxSockets: 50,
       });
     } else {
@@ -159,24 +148,19 @@ async function createProxyAgent(proxyString, proxies = []) {
         auth ? auth + "@" : ""
       }${host}:${port}`;
       httpAgent = new SocksProxyAgent(socksUrl, {
-        rejectUnauthorized: false,
         keepAlive: true,
         timeout: 15000, // 总超时时间增加到15秒
-        freeSocketTimeout: 30000, // 空闲连接超时
-        connectTimeout: 5000, // 单独设置连接建立超时
         maxSockets: 50,
       });
       httpsAgent = new SocksProxyAgent(socksUrl, {
-        rejectUnauthorized: false,
         keepAlive: true,
         timeout: 15000, // 总超时时间增加到15秒
-        freeSocketTimeout: 30000, // 空闲连接超时
-        connectTimeout: 5000, // 单独设置连接建立超时
         maxSockets: 50,
       });
     }
     // 验证代理
     try {
+      // @ts-ignore
       await checkProxy(httpsAgent, proxyString);
     } catch (error) {
       throw error;
@@ -288,8 +272,7 @@ const log = new Proxy(logObj, {
 /**
  * 重试函数
  * @param fn {Function} 函数
- * @param maxCount {Number=3?} 最大重试次数
- * @returns {Promise<*>}
+ * @param maxCount {Number?} 最大重试次数
  * */
 function fnCanRetry(fn, maxCount = 3) {
   return async function (...args) {
@@ -471,6 +454,7 @@ const createProcess = async (tasks, fn, proxies = [], concurrence = null) => {
     processQueue(queue)
   );
   const allResults = await Promise.all(
+    // @ts-ignore
     [...taskQueues.values()].map((queue) => queueProcessByConcurrence(queue))
   );
 
@@ -505,9 +489,8 @@ const createProcess = async (tasks, fn, proxies = [], concurrence = null) => {
 /**
  * 队列操作
  * @param concurrency 同时执行的数量
- * @param fn {(arg) => Promise<any>} 操作函数 异步函数
- * @returns  {function(arg, getRemoveQueueSource?): Promise<any>}
- *
+ * @param {function(any): Promise<any>} fn - 操作函数，异步函数
+ * @returns {function(any, function?): Promise<any>} 返回一个队列执行函数
  * @desc
  * 使用方法
  *
@@ -580,7 +563,7 @@ const createQueue = (concurrency, fn) => {
  * @param interval  每多少ms
  * @param maxTasksPerInterval 每interval 秒执行多少次任务
  * @param task {(arg) => Promise<any>}  任务函数
- * @returns  {function(arg, getRemoveQueueSource?): Promise<any>}
+ * @returns  {function(any, function): Promise<any>}
  *
  * 使用方法
  *
@@ -674,6 +657,7 @@ const useGlobalTimeInterval = () => {
   let intervalIds = new Set(); // 存储 setInterval ID
 
   // 代理 setTimeout
+  // @ts-ignore
   global.setTimeout = function (callback, delay, ...args) {
     const id = originalSetTimeout(callback, delay, ...args);
     timeoutIds.add(id);
@@ -685,6 +669,7 @@ const useGlobalTimeInterval = () => {
     return originalClearTimeout(id);
   };
   // 代理 setInterval
+  // @ts-ignore
   global.setInterval = function (callback, delay, ...args) {
     const id = originalSetInterval(callback, delay, ...args);
     intervalIds.add(id);
@@ -706,6 +691,12 @@ const useGlobalTimeInterval = () => {
 };
 useGlobalTimeInterval();
 
+/**
+ * 主线程
+ * @param url {String} 文件路径
+ * @param main {function} 主线程执行函数
+ * @param run {function} 子线程执行函数
+ */
 const useMainThread = (url, main = () => {}, run = () => {}) => {
   const __filename = fileURLToPath(url);
   const isEntry =

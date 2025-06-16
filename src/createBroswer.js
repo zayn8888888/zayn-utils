@@ -2,10 +2,24 @@ import { spawn, execSync } from "child_process";
 import path, { resolve } from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import os from "os";
 import { sleep, createProxyAgent } from "./utils.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import readline from "readline";
+
+// 获取包的根目录
+function getPackageRoot() {
+  try {
+    // 尝试解析包的package.json位置
+    const packageJsonPath = require.resolve("zayn-utils/package.json");
+    return path.dirname(packageJsonPath);
+  } catch (error) {
+    // 如果失败，使用相对路径（开发环境）
+    return path.resolve(__dirname, "..");
+  }
+}
+
 // 动态导入函数
 const importBrowserDeps = async () => {
   try {
@@ -82,28 +96,27 @@ const useRl = (browser) => {
   return rl;
 };
 
-const initData = async (proxy, ws, hidden = false) => {
+const initData = async (chromePath, proxy, ws, hidden = false) => {
   const index = Math.floor(Math.random() * 1000);
   let proxyObj;
   if (proxy) {
     proxyObj = await createProxyAgent(proxy);
   }
-  const userDataDir = path.join(path.dirname(__filename), `./temp/${index}`);
+  const tempDir = os.tmpdir();
+  console.log(tempDir);
+  const userDataDir = path.join(tempDir, `./autoC/${index}`);
   if (!fs.existsSync(userDataDir)) {
     fs.mkdirSync(userDataDir, { recursive: true });
   }
-  const shortcutPath = path.join(
-    path.dirname(__filename),
-    `./temp/${index}.lnk`
-  );
+  const shortcutPath = path.join(tempDir, `./autoC/${index}.lnk`);
   let dcpPort = 30000 + index;
   // 移除headless相关参数，保持正常启动
-  let chromeArgs = `--no-first-run --no-default-browser-check --user-data-dir="${userDataDir}" --remote-debugging-port=${dcpPort} `;
+  let chromeArgs = `--no-first-run --no-default-browser-check --user-data-dir="${userDataDir}" --remote-debugging-port=${dcpPort}`;
   if (proxyObj) {
     chromeArgs += ` --proxy-server="${proxyObj.host}:${proxyObj.port}"`;
   }
   // 添加一些反检测参数，但不使用headless
-  chromeArgs += ` --ignore-certificate-errors --disable-web-security `;
+  chromeArgs += ` --ignore-certificate-errors --disable-web-security`;
   chromeArgs += ` --disable-blink-features=AutomationControlled`;
 
   if (!fs.existsSync(shortcutPath)) {
@@ -111,7 +124,7 @@ const initData = async (proxy, ws, hidden = false) => {
       ws.create(
         shortcutPath,
         {
-          target: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          target: chromePath,
           args: chromeArgs,
           workingDir: userDataDir,
           desc: `Chrome for data ${index}`,
@@ -129,7 +142,12 @@ const initData = async (proxy, ws, hidden = false) => {
   }
   return { userDataDir, proxy: proxyObj, index, dcpPort, shortcutPath };
 };
-
+/**
+ * @typedef {object} CaptchaPlugin
+ * @property {string} [path] 自定义插件路径（与name互斥）
+ * @property {"2captcha"|"yesCaptcha"} [name] 内置插件名称（与path互斥）
+ * @property {string} key 插件API密钥
+ */
 /**
  * 创建自动化浏览器
  * @param {object} options
@@ -137,10 +155,8 @@ const initData = async (proxy, ws, hidden = false) => {
  * @param {boolean} options.real 是否真实浏览器
  * @param {boolean} options.headless 是否无头浏览器
  * @param {boolean} options.needRl 是否需要rl 支持exit 和script （运行./script.js 文件）
- * @param {array} options.captchaPlugins 验证码插件配置数组
- * @param {string} [options.captchaPlugins[].path] 自定义插件路径（与name互斥）
- * @param {string} [options.captchaPlugins[].name] 内置插件名称，支持: "2captcha" | "yesCaptcha"（与path互斥）
- * @param {string} options.captchaPlugins[].key 插件API密钥（2captcha使用apiKey，yesCaptcha使用clientKey）
+ * @param {string} options.chromePath 自定义chrome路径
+ * @param {CaptchaPlugin[]} options.captchaPlugins 验证码插件配置数组
  * @example
  * // 使用内置2captcha插件
  * captchaPlugins: [{ name: "2captcha", key: "your-api-key" }]
@@ -154,10 +170,12 @@ const initData = async (proxy, ws, hidden = false) => {
  * @property {import('puppeteer').Browser} browser - Puppeteer浏览器实例
  * @property {import('puppeteer').Page} page - 浏览器页面实例
  * @property {URL|null} parsedProxy - 解析后的代理配置对象，无代理时为null
+ *
  */
-export const createBroswer = async ({
+const createBroswer = async ({
   proxy,
   real = false,
+  chromePath = `C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe`,
   headless = true,
   captchaPlugins = [],
   needRl = false,
@@ -169,18 +187,18 @@ export const createBroswer = async ({
 
     puppeteer.use(StealthPlugin());
     let pathToExtensions = [];
+    const packageRoot = getPackageRoot();
     captchaPlugins.forEach((plugin) => {
       const { key, name, path: pathToExtension } = plugin;
       if (pathToExtension) {
         pathToExtensions.push(pathToExtension);
       } else if (name === "2captcha") {
-        pathToExtensions.push(
-          path.join(__dirname, "./plugins/2captcha-solver")
+        const pluginPath = path.join(
+          packageRoot,
+          "src/plugins/2captcha-solver"
         );
-        const configPath = path.join(
-          __dirname,
-          "./plugins/2captcha-solver/common/config.js"
-        );
+        pathToExtensions.push(pluginPath);
+        const configPath = path.join(pluginPath, "/common/config.js");
         let configContent = fs.readFileSync(configPath, "utf8");
         // 替换apiKey
         configContent = configContent.replace(
@@ -189,13 +207,12 @@ export const createBroswer = async ({
         );
         fs.writeFileSync(configPath, configContent);
       } else if (name === "yesCaptcha") {
-        pathToExtensions.push(
-          path.join(__dirname, "./plugins/yesCaptcha-solver")
+        const pluginPath = path.join(
+          packageRoot,
+          "src/plugins/yesCaptcha-solver"
         );
-        const configPath = path.join(
-          __dirname,
-          "./plugins/yesCaptcha-solver/config.js"
-        );
+        pathToExtensions.push(pluginPath);
+        const configPath = path.join(pluginPath, "config.js");
         let configContent = fs.readFileSync(configPath, "utf8");
         // 替换clientKey
         configContent = configContent.replace(
@@ -255,6 +272,7 @@ export const createBroswer = async ({
   }
   const { puppeteerCore, ws } = await importRealBrowserDeps();
   const { userDataDir, dcpPort, shortcutPath } = await initData(
+    chromePath,
     proxy,
     ws,
     headless
@@ -266,7 +284,7 @@ export const createBroswer = async ({
     detached: true,
     stdio: "ignore",
   });
-  await sleep(2000, false);
+  await sleep(2000);
 
   // 通过CDP方式连接
   // 增加重试机制和端口检测
@@ -313,3 +331,5 @@ export const createBroswer = async ({
 
   return { browser, page, parsedProxy };
 };
+
+export { createBroswer };

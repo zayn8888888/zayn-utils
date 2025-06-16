@@ -14,20 +14,22 @@
       },
       "require": {
         "types": "./types/index.d.ts",
-        "default": "./dist/index.cjs.js"
+        "default": "./dist/index.cjs"
       }
     }
   },
   "files": [
     "dist",
     "types",
-    "README.md"
+    "README.md",
+    "src/plugins"
   ],
   "scripts": {
     "build": "rollup -c",
     "build:types": "tsc",
     "build:all": "npm run build:types && npm run build",
     "prepublishOnly": "npm run build:all",
+    "test": "npm run build:all && npm pack",
     "dev": "npm run build:types -- --watch",
     "obfuscator": "javascript-obfuscator index.js --output main.js --compact true --control-flow-flattening true --string-array true --string-array-encoding base64 --self-defending true"
   },
@@ -42,7 +44,6 @@
     "chalk": "^5.4.1",
     "https-proxy-agent": "^7.0.6",
     "marked": "^15.0.12",
-    "matrix-js-sdk": "37.5.0",
     "node-fetch": "^3.3.2",
     "readline": "^1.3.0",
     "socks-proxy-agent": "^8.0.5"
@@ -70,6 +71,9 @@
       "optional": true
     },
     "puppeteer-extra-plugin-stealth": {
+      "optional": true
+    },
+    "matrix-js-sdk": {
       "optional": true
     }
   },
