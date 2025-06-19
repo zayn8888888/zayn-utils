@@ -20,7 +20,6 @@ const external = [
   "puppeteer",
   "puppeteer-extra-plugin-stealth",
   "windows-shortcuts",
-  "puppeteer-core",
 ];
 
 export default [

@@ -42,17 +42,19 @@ const importBrowserDeps = async () => {
 // 动态导入函数
 const importRealBrowserDeps = async () => {
   try {
-    const [ws, puppeteerCore] = await Promise.all([
+    const [ws, puppeteer, StealthPlugin] = await Promise.all([
       import("windows-shortcuts"),
-      import("puppeteer-core"),
+      import("puppeteer-extra"),
+      import("puppeteer-extra-plugin-stealth"),
     ]);
     return {
       ws: ws.default,
-      puppeteerCore: puppeteerCore.default,
+      puppeteer: puppeteer.default,
+      StealthPlugin: StealthPlugin.default,
     };
   } catch (error) {
     throw new Error(
-      `缺少浏览器自动化依赖，请安装: npm install puppeteer-core windows-shortcuts \n原始错误: ${error.message}`
+      `缺少浏览器自动化依赖，请安装: npm install puppeteer-extra puppeteer-extra-plugin-stealth windows-shortcuts \n原始错误: ${error.message}`
     );
   }
 };
@@ -270,7 +272,9 @@ const createBroswer = async ({
     if (!headless && needRl) useRl(browser);
     return { browser, page, parsedProxy };
   }
-  const { puppeteerCore, ws } = await importRealBrowserDeps();
+  const { puppeteer, ws, StealthPlugin } = await importRealBrowserDeps();
+
+  puppeteer.use(StealthPlugin());
   const { userDataDir, dcpPort, shortcutPath } = await initData(
     chromePath,
     proxy,
@@ -295,7 +299,7 @@ const createBroswer = async ({
     try {
       // 先检测端口是否开放
       execSync(`netstat -an | find "${dcpPort}" | find "LISTENING"`);
-      browser = await puppeteerCore.connect({
+      browser = await puppeteer.connect({
         browserURL: cdpUrl,
         defaultViewport: null,
       });

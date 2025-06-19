@@ -92,7 +92,7 @@ const checkProxy = fnCanRetry(async (agent, proxyString) => {
  * @returns {Promise<{host: string, port: number|string, username?: string, password?: string, httpAgent: Object, httpsAgent: Object,proxyString:String}>} 代理对象，包含主机、端口、用户名、密码和代理Agent
 
  */
-async function createProxyAgent(proxyString, options) {
+async function createProxyAgent(proxyString, options = {}) {
   const { proxies = [], needCheck = true } = options;
   try {
     let protocol, host, port, auth;
