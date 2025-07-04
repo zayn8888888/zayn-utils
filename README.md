@@ -67,6 +67,13 @@ const {
 - createQueue(concurrency, fn) - Create task queue
 - createProcess(tasks, fn, proxies, concurrence) - Process tasks with proxies
 
+## peerDependencies
+
+Some features require additional dependencies:
+
+- Browser automation features: `npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth windows-shortcuts`
+- Encrypted messaging features: `npm install matrix-js-sdk@37.5.0`
+
 ## License
 
 MIT
