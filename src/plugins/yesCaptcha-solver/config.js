@@ -1,5 +1,5 @@
 const config = {
-  clientKey: "1195504c5c6212b9974de6d572c7f8015346937860020", // 你购买授权的clientKey
+  clientKey: "", // 你购买授权的clientKey
   host: "https://api.yescaptcha.com", // 服务器地址，默认官网服务器https://api.yescaptcha.com
 
   autorun: true, // 自动运行 true or false

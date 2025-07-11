@@ -32,8 +32,8 @@ const loadProxies = (path = "proxies.txt") => {
   const proxys = data
     .toString()
     .split("\n")
-    .filter((item) => item)
-    .map((item) => item.trim());
+    .map((item) => item.trim())
+    .filter((item) => item);
   return proxys;
 };
 const loadUser = (path = "wallet.txt") => {
