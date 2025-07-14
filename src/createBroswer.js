@@ -321,7 +321,7 @@ const createBroswer = async ({
     });
   }
 
-  await page.goto("https://ipinfo.io/json");
+  await page.goto("https://icanhazip.com");
   if (needRl) useRl(browser);
   // 监听关闭事件
   browser.on("disconnected", () => {

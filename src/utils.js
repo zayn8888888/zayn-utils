@@ -73,7 +73,7 @@ const checkProxy = fnCanRetry(async (agent, proxyString) => {
   try {
     await axios({
       method: "HEAD",
-      url: "https://ipinfo.io/json",
+      url: "https://icanhazip.com",
       httpsAgent: agent,
       timeout: 3000,
     });
