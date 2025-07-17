@@ -712,6 +712,45 @@ const useMainThread = (url, main = () => {}, run = () => {}) => {
     }
   }
 };
+
+/**
+ * 获取中国当前时间
+ */
+const getChinaNow = () => {
+  const now = new Date();
+  return new Date(
+    now.getTime() + 8 * 60 * 60 * 1000 + now.getTimezoneOffset() * 60 * 1000
+  );
+};
+
+/**
+ * 获取伪造请求头
+ */
+const getHeaders = (origin) => {
+  return {
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0",
+    origin: origin,
+    referer: origin,
+    "sec-ch-ua":
+      '"Not)A;Brand";v="8", "Chromium";v="138", "Microsoft Edge";v="138"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+  };
+};
+/**
+ * 加载并检查代理
+ * @param path {String} 代理文件路径
+ * @returns {Promise<Array>} 检查后的代理数组
+ */
+const loadCheckedProxies = async (path) => {
+  const proxies = await loadProxies(path);
+  return proxies.filter((item) => checkProxy(item));
+};
+
 export {
   askQuestion,
   createProxyAgent,
@@ -728,4 +767,7 @@ export {
   checkProxys,
   useGlobalTimeInterval,
   useMainThread,
+  getChinaNow,
+  getHeaders,
+  loadCheckedProxies,
 };

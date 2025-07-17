@@ -148,3 +148,27 @@ export function useGlobalTimeInterval(): any;
  * @param run {function} 子线程执行函数
  */
 export function useMainThread(url: string, main?: Function, run?: Function): void;
+/**
+ * 获取中国当前时间
+ */
+export function getChinaNow(): Date;
+/**
+ * 获取伪造请求头
+ */
+export function getHeaders(origin: any): {
+    "user-agent": string;
+    origin: any;
+    referer: any;
+    "sec-ch-ua": string;
+    "sec-ch-ua-mobile": string;
+    "sec-ch-ua-platform": string;
+    "sec-fetch-dest": string;
+    "sec-fetch-mode": string;
+    "sec-fetch-site": string;
+};
+/**
+ * 加载并检查代理
+ * @param path {String} 代理文件路径
+ * @returns {Promise<Array>} 检查后的代理数组
+ */
+export function loadCheckedProxies(path: string): Promise<any[]>;
