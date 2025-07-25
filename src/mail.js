@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createProxyAgent } from "./utils";
+import { createProxyAgent } from "./utils.js";
 
 /**
  * 创建或者登录邮箱

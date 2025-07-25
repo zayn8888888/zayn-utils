@@ -25,7 +25,7 @@ export function createProxyAgent(proxyString: string, options?: {
     httpsAgent: any;
     proxyString: string;
 }>;
-export function sleep(time?: number): Promise<any>;
+export function sleep(time?: number, showLog?: boolean): Promise<any>;
 export namespace log {
     function success(msg: any): void;
     function error(msg: any): void;

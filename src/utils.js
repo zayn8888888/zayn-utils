@@ -49,11 +49,13 @@ const loadUser = (path = "wallet.txt") => {
     .filter((item) => item);
   return wallet;
 };
-const sleep = (time = 3000) => {
+const sleep = (time = 3000, showLog = true) => {
   if (time < 10) {
     time = time * 1000;
   }
-  log.yellow(`等待${time / 1000}s`);
+  if (showLog) {
+    log.yellow(`等待${time / 1000}s`);
+  }
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       resolve();
